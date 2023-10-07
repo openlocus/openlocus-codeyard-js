@@ -19,3 +19,60 @@ yarn-error.log*
 *.sublime*
 *.sublime-project
 *.sublime-workspace
+
+# OS generated files
+*.DS_Store
+*.Spotlight-V100
+*.Trashes
+*.TemporaryItems
+*.WindowsSearch
+*.fuse_hidden*
+*._*
+.Trash-*
+
+# Data files
+/data
+*.csv
+*.json
+*.xml
+*.sqlite
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# Dependency directories
+/bower_components
+
+# User-specific files
+*.pem
+*.der
+*.pfx
+*.p12
+
+# Directories used by tools, packages
+/coverage
+/.nyc_output
+/.sass-cache
+/connectedCheck
+.gradle
+/ios/build/
+
+# Compiled binary add-ons (http://nodejs.org/api/addons.html)
+build/Release
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+*.MST
+
+# Windows shortcuts
+*.lnk
+```
