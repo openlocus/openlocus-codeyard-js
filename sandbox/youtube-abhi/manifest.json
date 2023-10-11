@@ -10,12 +10,20 @@
     "128": "images/icon-128.png"
   },
   "permissions": [
-    "history"
+    "tabs",
+    "activeTab"
   ],
   "content_scripts": [
     {
-      "js": ["content.js"],
-      "matches": ["<all_urls>"]
+      "js": [
+        "content.js"
+      ],
+      "matches": [
+        "https://www.youtube.com/*"
+      ]
     }
-  ]
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
 }
