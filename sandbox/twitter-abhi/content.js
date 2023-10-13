@@ -1,3 +1,10 @@
+// Global Variables
+
+var techCheckboxVal = 0
+var sportsCheckboxVal = 0
+var politicsCheckboxVal = 0
+
+
 // Function to inject Bootstrap CSS from a CDN
 function injectBootstrapCSS() {
     const link = document.createElement("link");
@@ -12,55 +19,73 @@ function injectBootstrapCSS() {
 injectBootstrapCSS();
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-    if (message.action === 'getTweetTitles') {
-        const integerArg = message.integerArg; // Extract the arguments from the message
-        getTweetTitles(100)
-    }
     if (message.action === 'getTitleTags') {
-        var tweets = [];
-        (async () => {
-            const numTitles = 10; // Define the number of titles you want to collect
-            var tmp = await createTagsAndTitles(numTitles);
-            tweets.push(...tmp);
-            // for (var e = 0; e < tweets.length; e++) {
-            //     addTagBeforeElements(tweets[e]);
-            // }
-        })();
-        showTagDialogBox(tweets)
-    }
-});
+        // reload webpage
+        showTagDialogBox([])
+        getCheckBoxUpdates()
 
-async function createTagsAndTitles(numTitles) {
-    const scrollInterval = 1000; // Time interval between scroll actions in milliseconds
-    const numTitlesPerScroll = 1; // Number of tweet titles loaded per scroll (adjust as needed)
+        // First assign tags to already loaded Tweets
+        const tweetTitleElements = document.querySelectorAll('[data-testid="cellInnerDiv"]');
 
-    const tweets = [];
-    while (tweets.length < numTitles) {
-        const tweetTitleElements = document.querySelectorAll('[data-testid="tweetText"]');
-        const tweetElements = document.querySelectorAll('[data-testid="tweet"]');
-
-        if (tweetTitleElements.length === 0) {
-            // No more titles found, exit the loop
-            break;
-        }
-        for (var element = 0; element < tweetTitleElements.length; element++) {
-            const titleText = tweetTitleElements[element].innerText.trim();
-            if (titleText) {
-                var Tag = assignTag(titleText, tweetElements[element])
-                tweets.push(Tag)
-                addTagBeforeElements(Tag);
-                console.log(Tag)
+        for (const element of tweetTitleElements) {
+            const tweetElement = element.querySelector('[data-testid="tweetText"')
+            if (tweetElement) {
+                // console.log("Tweet Text:", tweetText.textContent);
+                var assignedTag = assignTag(Element)
+                console.log(assignedTag)
+                if ((assignedTag.tag == "sports" && sportsCheckboxVal == 1) ||
+                    (assignedTag.tag == "tech" && techCheckboxVal == 1) ||
+                    (assignedTag.tag == "politics" && politicsCheckboxVal == 1)) {
+                    console.log("HI")
+                    addTagBeforeElements(assignedTag)
+                } else {
+                    element.style.visibility = 'hidden';
+                }
             }
         }
 
-        // Scroll down by a certain amount (adjust as needed)
-        window.scrollBy(0, window.innerHeight * numTitlesPerScroll);
+        // find the primaryColumn div
+        const targetNode = document.querySelector('[data-testid="primaryColumn"]');
 
-        // Wait for a brief moment to allow content to load
-        await new Promise(resolve => setTimeout(resolve, scrollInterval));
+        if (targetNode) {
+            const config = { childList: true, subtree: true };
+
+            const callback = (mutationList, observer) => {
+                mutationList.forEach((mutation) => {
+                    if (mutation.addedNodes.length > 0) {
+                        mutation.addedNodes.forEach((node) => {
+                            // Check if the added node has the data-testid attribute set to 'cellInnerDiv'
+                            if (node instanceof Element && node.getAttribute('data-testid') === 'cellInnerDiv') {
+                                // Find and print the content of the 'tweetText' div
+                                const tweetTextElement = node.querySelector('[data-testid="tweetText"]');
+                                if (tweetTextElement) {
+                                    // console.log("Tweet Text:", tweetText.textContent);
+                                    var assignedTag = assignTag(tweetTextElement)
+                                    console.log(assignedTag)
+                                    if ((assignedTag.tag == "sports" && sportsCheckboxVal == 1) ||
+                                        (assignedTag.tag == "tech" && techCheckboxVal == 1) ||
+                                        (assignedTag.tag == "politics" && politicsCheckboxVal == 1)) {
+                                        console.log("HI")
+                                        addTagBeforeElements(assignedTag)
+                                    } else {
+                                        node.style.visibility = 'hidden';
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            };
+
+            const observer = new MutationObserver(callback);
+
+            observer.observe(targetNode, config);
+        } else {
+            console.log('The target node was not found.');
+        }
     }
-    return tweets
-}
+});
+
 
 function addTagBeforeElements(Tag) {
     const textElement = document.createElement("div");
@@ -74,11 +99,12 @@ function addTagBeforeElements(Tag) {
     } else {
         textElement.textContent = "tech"; // You can style this class in your CSS
     }
+    textElement.style.display = 'inline'
+    textElement.style.width = 'fit-content'
     textElement.style.backgroundColor = Tag.tagColor
     textElement.style.color = "white"
     textElement.style.borderRadius = "5px"
-    textElement.style.width = 'auto'
-    element.parentNode.style.border = "2px solid white"
+    textElement.style.padding = "5px 10px 5px 10px"
 
     // Set the text content
     textElement.textContent = Tag.tag;
@@ -103,16 +129,16 @@ function showTagDialogBox(tweets) {
         <div style='padding-left: 10px; padding-top: 10px; padding-bottom: 10px'>
             <h1 class="filter-text display-4" style='padding: 10 10 10 10'>Filter</h1>
             <div class="custom-control custom-checkbox" style='padding: 10 10 10 10'>
-                <input type="checkbox" id="techCheckbox" class="custom-control-input" name="tech" value="Tech">
-                <label class="custom-control-label" for="techCheckbox">Tech</label>
+                <input type="checkbox" id="techCheckboxVal" class="custom-control-input" name="tech" value="Tech">
+                <label class="custom-control-label" for="techCheckboxVal">Tech</label>
             </div>
             <div class="custom-control custom-checkbox" style='padding: 10 10 10 10'>
-                <input type="checkbox" id="politicsCheckbox" class="custom-control-input" name="politics" value="Politics">
-                <label class="custom-control-label" for="politicsCheckbox">Politics</label>
+                <input type="checkbox" id="politicsCheckboxVal" class="custom-control-input" name="politics" value="Politics">
+                <label class="custom-control-label" for="politicsCheckboxVal">Politics</label>
             </div>
             <div class="custom-control custom-checkbox" style='padding: 10 10 10 10'>
-                <input type="checkbox" id="sportsCheckbox" class="custom-control-input" name="sports" value="Sports">
-                <label class="custom-control-label" for="sportsCheckbox">Sports</label>
+                <input type="checkbox" id="sportsCheckboxVal" class="custom-control-input" name="sports" value="Sports">
+                <label class="custom-control-label" for="sportsCheckboxVal">Sports</label>
             </div>
         </div>
         `;
@@ -123,108 +149,88 @@ function showTagDialogBox(tweets) {
 
         // Insert the cloned div above the original div
         originalDiv.parentNode.insertBefore(clonedDiv, originalDiv);
-
-        // Add event listeners to the checkboxes
-        const techCheckbox = document.getElementById("techCheckbox");
-        const politicsCheckbox = document.getElementById("politicsCheckbox");
-        const sportsCheckbox = document.getElementById("sportsCheckbox");
-
-        techCheckbox.addEventListener("change", function () {
-            // Handle the change of the Tech checkbox here
-            if (techCheckbox.checked) {
-                // Checkbox is checked
-                console.log("Tech checkbox is checked");
-                for (e in tweets) {
-                    if (e.tag != 'tech') {
-                        console.log(e)
-                        e.tweetElement.remove()
-                    }
-                }
-            } else {
-                // Checkbox is unchecked
-                console.log("Tech checkbox is unchecked");
-            }
-        });
-
-        politicsCheckbox.addEventListener("change", function () {
-            // Handle the change of the Politics checkbox here
-            if (politicsCheckbox.checked) {
-                // Checkbox is checked
-                console.log("Politics checkbox is checked");
-                for (e in tweets) {
-                    if (e.tag != 'politics') {
-                        console.log(e)
-                        e.tweetElement.remove()
-                    }
-                }
-            } else {
-                // Checkbox is unchecked
-                console.log("Politics checkbox is unchecked");
-            }
-        });
-
-        sportsCheckbox.addEventListener("change", function () {
-            // Handle the change of the Sports checkbox here
-            if (sportsCheckbox.checked) {
-                // Checkbox is checked
-                console.log("Sports checkbox is checked");
-                for (e in tweets) {
-                    if (e.tag != 'sports') {
-                        console.log(e)
-                        e.tweetElement.remove()
-                    }
-                }
-            } else {
-                // Checkbox is unchecked
-                console.log("Sports checkbox is unchecked");
-            }
-        });
     }
 }
 
-function assignTag(tweetTitle, tweetElement) {
-    var tags = ['tech', 'politics', 'sports']
-    var tagColors = ['blue', 'green', 'red']
 
-    var rem = tweetTitle.length % 3
+function getCheckBoxUpdates() {
+    // Add event listeners to the checkboxes
+    const techCheckbox = document.getElementById("techCheckboxVal");
+    const politicsCheckbox = document.getElementById("politicsCheckboxVal");
+    const sportsCheckbox = document.getElementById("sportsCheckboxVal");
+
+    techCheckbox.addEventListener("change", function () {
+        // Handle the change of the Tech checkbox here
+        if (techCheckbox.checked) {
+            // Checkbox is checked
+            console.log("Tech checkbox is checked");
+            techCheckboxVal = 1
+        } else {
+            // Checkbox is unchecked
+            console.log("Tech checkbox is unchecked");
+            techCheckboxVal = 0
+        }
+    });
+
+    politicsCheckbox.addEventListener("change", function () {
+        // Handle the change of the Politics checkbox here
+        if (politicsCheckbox.checked) {
+            // Checkbox is checked
+            console.log("Politics checkbox is checked");
+            politicsCheckboxVal = 1
+        } else {
+            // Checkbox is unchecked
+            console.log("Politics checkbox is unchecked");
+            politicsCheckboxVal = 0
+        }
+    });
+
+    sportsCheckbox.addEventListener("change", function () {
+        // Handle the change of the Sports checkbox here
+        if (sportsCheckbox.checked) {
+            // Checkbox is checked
+            console.log("Sports checkbox is checked");
+            sportsCheckboxVal = 1
+        } else {
+            // Checkbox is unchecked
+            console.log("Sports checkbox is unchecked");
+            sportsCheckboxVal = 0
+        }
+    });
+
+}
+
+i = 0
+function assignTag(tweetElement) {
+    var tags = ['tech', 'politics', 'sports']
+    var tagColors = ['#d64161', '#b5e7a0', '#4040a1']
+
+    var tweetTitle = tweetElement.textContent
+
+    var rem = i % 3
 
     if (rem == 0) {
+        i += 1
         return { tweetTitle: tweetTitle, tag: tags[0], tagColor: tagColors[0], tweetElement: tweetElement }
     } else if (rem == 1) {
+        i += 1
         return { tweetTitle: tweetTitle, tag: tags[1], tagColor: tagColors[1], tweetElement: tweetElement }
     } else {
+        i += 1
         return { tweetTitle: tweetTitle, tag: tags[2], tagColor: tagColors[2], tweetElement: tweetElement }
     }
 }
 
-async function getTweetTitles(numTitles) {
-    const scrollInterval = 1000; // Time interval between scroll actions in milliseconds
-    const numTitlesPerScroll = 20; // Number of tweet titles loaded per scroll (adjust as needed)
-
+function getAvailableTweets() {
     const tweetTitles = [];
-    index = 0;
-    while (tweetTitles.length < numTitles) {
-        const tweetTitleElements = document.querySelectorAll('[data-testid="tweetText"]');
+    const tweetTitleElements = document.querySelectorAll('[data-testid="tweetText"]');
 
-        if (tweetTitleElements.length === 0) {
-            // No more titles found, exit the loop
-            break;
+    for (const element of tweetTitleElements) {
+        const titleText = element.innerText.trim();
+        if (titleText) {
+            tweetTitles.push(titleText);
         }
-        for (const element of tweetTitleElements) {
-            const titleText = element.innerText.trim();
-            if (titleText) {
-                tweetTitles.push(titleText);
-                index += 1;
-            }
-        }
-
-        // Scroll down by a certain amount (adjust as needed)
-        window.scrollBy(0, window.innerHeight * numTitlesPerScroll);
-
-        // Wait for a brief moment to allow content to load
-        await new Promise(resolve => setTimeout(resolve, scrollInterval));
     }
 
-    // console.log(tweetTitles.slice(0, numTitles).join('\n'));
-    return tweetTitles
+    return tweetTitleElements
 }
